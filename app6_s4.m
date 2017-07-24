@@ -12,7 +12,7 @@ desired_freq = 8000;
 plot(abs(fft(s1,fe1)));
 
 rif_filter = rif_lowpass();
-
+s1 = [s1; zeros(42,1)];
 s1_filtered = filter(rif_filter, s1);
 s1_down = downsample(s1_filtered, fe1/desired_freq);
 
@@ -20,7 +20,7 @@ figure
 plot(abs(fft(s1_filtered, desired_freq)));
 
 rif_delay = 7;
-s1_down = s1_down(rif_delay:end);
+s1_down = s1_down(rif_delay+1:end);
 
 % RII Butterworth
 % -------------------------------------------------------------------------
@@ -62,39 +62,34 @@ delta = 107/fe*2;
 
 hold on  % utiliser hold on et freqz pour superposer les filtres
 [b1 a1] = butter(1,[raies_spectrales(1,2)-delta,raies_spectrales(1,2)+delta],'bandpass');
-fvtool(b1,a1);   
+% fvtool(b1,a1);   
 title(['butter laissant passer ', num2str(raies_spectrales(1,2)*fe/2),' Hz']);
 
 
 [b2 a2] = butter(1,[raies_spectrales(2,2)-delta,raies_spectrales(2,2)+delta],'bandpass');
-fvtool(b2,a2); 
+% fvtool(b2,a2); 
 title(['butter laissant passer ', num2str(raies_spectrales(2,2)*fe/2),' Hz']);
 
 
 [b3 a3]= butter(1,[raies_spectrales(3,2)-delta,raies_spectrales(3,2)+delta],'bandpass');
-fvtool(b3,a3); 
+% fvtool(b3,a3); 
 title(['butter laissant passer ', num2str(raies_spectrales(3,2)*fe/2),' Hz']);
 
 
 [b4 a4] = butter(1,[raies_spectrales(4,2)-delta,raies_spectrales(4,2)+delta],'bandpass');
-fvtool(b4,a4); 
+% fvtool(b4,a4); 
 title(['butter laissant passer ', num2str(raies_spectrales(4,2)*fe/2),' Hz']);
 
 
 [b5 a5] = butter(2,[raies_spectrales(5,2)-delta,raies_spectrales(5,2)+delta],'bandpass');
-fvtool(b5,a5); 
+% fvtool(b5,a5); 
 title(['butter laissant passer ', num2str(raies_spectrales(5,2)*fe/2),' Hz']);
 
 
 [b6 a6] = butter(1,[raies_spectrales(6,2)-delta,raies_spectrales(6,2)+delta],'bandpass');
-fvtool(b6,a6); 
+% fvtool(b6,a6); 
 title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
 
-
-%test filtre
-s1 = filter(b1,a1,s1_down);
-plot(abs(fft(s1)));
-hold 
 
 %% bit checking ( 192 dwonsampled a 32 avec delai de groupe de 8 )
 
@@ -120,8 +115,46 @@ f5 = f5(rii_grp_delay:end);
 f6 = filter(b6,a6,s1_down);
 f6 = f6(rii_grp_delay:end);
 
-index_step = 1:32:length(f1)-31;
-for index == 1:l
+
+
+
+for index = 1:32:length(f1)-31
+   bit1 = 0;
+   bit2 = 0;
+   bit3 = 0;
+   bit4 = 0;
+   bit5 = 0;
+   bit6 = 0;
+   
+   
+if((max((f1(index:index+31).*triang(32))))>=0.1)
+    bit1=1;
+end
+
+if((max((f2(index:index+31).*triang(32))))>=0.1)
+    bit2=1;
+end
+
+if((max((f3(index:index+31).*triang(32))))>=0.1)
+    bit3=1;
+end
+
+if((max((f4(index:index+31).*triang(32))))>=0.1)
+    bit4=1;
+end
+
+if((max((f5(index:index+31).*triang(32))))>=0.1)
+    bit5=1;
+end
+
+if((max((f6(index:index+31).*triang(32))))>=0.1)
+    bit6=1;
+end
+  
+   
+       
+    
+end
 
 
 
