@@ -116,13 +116,19 @@ f5 = f5(rii_grp_delay+1:end);
 f6 = filter(b6,a6,s1_down);
 f6 = f6(rii_grp_delay+1:end);
 
-
-image_bits=[length(f1)/32];
-tab_bit_1 = [length(f1)/32];
+%Init tableau de la loop
+image_bits=[0];
+tab_bit_1 = [0];
 
 cpt=0;
 seuil = 0.03;
 bond = 31;
+nuage_bits1 = [zeros(1, length(f1)/32)];
+nuage_bits2 = [zeros(1, length(f1)/32)];
+nuage_bits3 = [zeros(1, length(f1)/32)];
+nuage_bits4 = [zeros(1, length(f1)/32)];
+nuage_bits5 = [zeros(1, length(f1)/32)];
+nuage_bits6 = [zeros(1, length(f1)/32)];
 
 for index = 1:32:length(f1)-bond
     cpt=cpt+1;
@@ -162,10 +168,37 @@ mean_bit6 = mean(abs((f6(index:index+bond).*triang(32))));
 if((mean_bit6>=seuil));
     bit6=1;
 end
-  
+
+nuage_bits1(cpt) = mean_bit1;
+nuage_bits2(cpt) = mean_bit2;
+nuage_bits3(cpt) = mean_bit3;
+nuage_bits4(cpt) = mean_bit4;
+nuage_bits5(cpt) = mean_bit5;
+nuage_bits6(cpt) = mean_bit6;
+
+
 a= [bit6 bit5 bit4 bit3 bit2 bit1];
 image_bits(cpt) = bi2de(a);        
 end
+% determiner les seuils 
+figure
+subplot(3,2,1)
+plot(nuage_bits1,'o');
+subplot(3,2,2)
+plot(nuage_bits2,'o');
+subplot(3,2,3)
+plot(nuage_bits3,'o');
+subplot(3,2,4)
+plot(nuage_bits4,'o');
+subplot(3,2,5)
+plot(nuage_bits5,'o');
+subplot(3,2,6)
+plot(nuage_bits6,'o');
+% nuage_bits2
+% nuage_bits3
+% nuage_bits4
+% nuage_bits5
+% nuage_bits6
 
 image_resolution = reshape(image_bits,[128,128]);
 figure
