@@ -117,46 +117,58 @@ f6 = filter(b6,a6,s1_down);
 f6 = f6(rii_grp_delay+1:end);
 
 
+image_bits=[length(f1)/32];
+tab_bit_1 = [length(f1)/32];
 
+cpt=0;
+seuil = 0.03;
+bond = 31;
 
-for index = 1:32:length(f1)-31
+for index = 1:32:length(f1)-bond
+    cpt=cpt+1;
    bit1 = 0;
    bit2 = 0;
    bit3 = 0;
    bit4 = 0;
    bit5 = 0;
-   bit6 = 0;
+   bit6 = 0;   
    
-   
-if((max((f1(index:index+31).*triang(32))))>=0.1)
+mean_bit1 = mean(abs((f1(index:index+bond).*triang(32))));
+if((mean_bit1>=seuil));
     bit1=1;
 end
 
-if((max((f2(index:index+31).*triang(32))))>=0.1)
+mean_bit2 = mean(abs((f2(index:index+bond).*triang(32))));
+if((mean_bit2>=seuil));
     bit2=1;
 end
 
-if((max((f3(index:index+31).*triang(32))))>=0.1)
+mean_bit3 = mean(abs((f3(index:index+bond).*triang(32))));
+if((mean_bit3>=seuil));
     bit3=1;
 end
 
-if((max((f4(index:index+31).*triang(32))))>=0.1)
+mean_bit4 = mean(abs((f4(index:index+bond).*triang(32))));
+if((mean_bit4>=seuil));
     bit4=1;
 end
 
-if((max((f5(index:index+31).*triang(32))))>=0.1)
+mean_bit5 = mean(abs((f5(index:index+bond).*triang(32))));
+if((mean_bit5>=seuil));
     bit5=1;
 end
 
-if((max((f6(index:index+31).*triang(32))))>=0.1)
+mean_bit6 = mean(abs((f6(index:index+bond).*triang(32))));
+if((mean_bit6>=seuil));
     bit6=1;
 end
   
-   
-       
-    
+a= [bit6 bit5 bit4 bit3 bit2 bit1];
+image_bits(cpt) = bi2de(a);        
 end
 
-
+image_resolution = reshape(image_bits,[128,128]);
+figure
+imshow(image_resolution,[0 63]);
 
 
