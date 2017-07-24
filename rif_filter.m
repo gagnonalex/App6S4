@@ -3,15 +3,14 @@ close all
 clc
 
 [s1, fe] = audioread('signal_A.wav');
-fe_down = 8000;
-s1_down = downsample(s1, (fe/fe_down));
+[s2, fe] = audioread('signal_B.wav');
 
+desired_freq = 8000;
 
-allo = rif_filter_design();
-% freqz(allo);
+plot(abs(fft(s1,fe)));
 
-result = filter(allo, s1_down);
-% wvtool(result);
+rif_filter = rif_lowpass();
+
 
 %% Banc de filtre 
 fe = 8000;
@@ -80,3 +79,4 @@ title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
 s1 = filter(b1,a1,result);
 plot(abs(fft(s1, fe_down)));
 hold off
+
