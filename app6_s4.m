@@ -63,7 +63,8 @@ hold on  % utiliser hold on et freqz pour superposer les filtres
 [b1 a1] = butter(1,[raies_spectrales(1,2)-delta,raies_spectrales(1,2)+delta],'bandpass');
 % fvtool(b1,a1);   
 title(['butter laissant passer ', num2str(raies_spectrales(1,2)*fe/2),' Hz']);
-
+figure
+freqz(b1,a1);
 
 [b2 a2] = butter(1,[raies_spectrales(2,2)-delta,raies_spectrales(2,2)+delta],'bandpass');
 % fvtool(b2,a2); 
