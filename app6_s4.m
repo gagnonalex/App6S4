@@ -32,8 +32,9 @@ spectre = abs(fft(s1_down, desired_freq));
 plot(0:8000-1,spectre);
 
 spectre_positif = spectre(1:(length(spectre)/2));
-[peaks freq]= findpeaks(spectre_positif);
 
+
+[peaks freq] = findpeaks(spectre_positif,'MinPeakHeight',200);
 
 % Sort them in descending order to find the largest ones.
 [sortedValues sortedIndexes] = sort((peaks), 'descend');
@@ -42,13 +43,13 @@ originalLocations = freq(sortedIndexes);
 raies_spectrales = [ zeros(1,6) ; zeros(1,6) ]';
 
 
-for k = 1 : min([6, length(sortedValues)])
+for k = 1 : 6
     fprintf(1, 'Peak #%d = %d, at location %d\n', ...
-    k, sortedValues(k), originalLocations(k)- 1 ); % on soustrait un car on doit partir a 0 
+    k, peaks(k), freq(k)- 1 ); % on soustrait un car on doit partir a 0 
 
     %matrix(row, column)
-    raies_spectrales(k,1) =sortedValues(k) ; % premiere colonne = amplitude
-    raies_spectrales(k,2) =originalLocations(k) ; % deuxieme colonne = freqs normalise sur 1(pi)
+    raies_spectrales(k,1) =peaks(k) ; % premiere colonne = amplitude
+    raies_spectrales(k,2) = freq(k)- 1 ; % deuxieme colonne = freqs normalise sur 1(pi)
     
 end
 
@@ -177,7 +178,7 @@ nuage_bits5(cpt) = mean_bit5;
 nuage_bits6(cpt) = mean_bit6;
 
 
-a= [ bit6 bit5  bit4 bit3 bit1 bit2 ];
+a= [bit1 bit2 bit3 bit4 bit5 bit6 ];
 % if( bi2de(a)==31)
 %     a = de2bi(47);
 % end
@@ -206,11 +207,7 @@ title('bit5');
 subplot(3,2,6)
 plot(nuage_bits6,'o');
 title('bit6');
-% nuage_bits2
-% nuage_bits3
-% nuage_bits4
-% nuage_bits5
-% nuage_bits6
+
 
 image_resolution = reshape(image_bits,[128,128]);
 figure
