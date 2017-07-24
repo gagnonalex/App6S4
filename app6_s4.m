@@ -95,25 +95,26 @@ title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
 
 %%trouvwr graphiquement avec FDA = 12
 
-rii_grp_delay = 12
+rii_grp_delay = 12;
+s1_down = [s1_down; zeros(rii_grp_delay,1)];
 
 f1 = filter(b1,a1,s1_down);
-f1 = f1(rii_grp_delay:end);
+f1 = f1(rii_grp_delay+1:end);
 
 f2 = filter(b2,a2,s1_down);
-f2 = f2(rii_grp_delay:end);
+f2 = f2(rii_grp_delay+1:end);
 
 f3 = filter(b3,a3,s1_down);
-f3 = f3(rii_grp_delay:end);
+f3 = f3(rii_grp_delay+1:end);
 
 f4 = filter(b4,a4,s1_down);
-f4 = f4(rii_grp_delay:end);
+f4 = f4(rii_grp_delay+1:end);
 
 f5 = filter(b5,a5,s1_down);
-f5 = f5(rii_grp_delay:end);
+f5 = f5(rii_grp_delay+1:end);
 
 f6 = filter(b6,a6,s1_down);
-f6 = f6(rii_grp_delay:end);
+f6 = f6(rii_grp_delay+1:end);
 
 
 
