@@ -143,7 +143,7 @@ mean_bit1 = mean(abs((f1(index:index+bond).*triang(32))));
 if((mean_bit1>=seuil));
     bit1=1;
 end
-
+  
 mean_bit2 = mean(abs((f2(index:index+bond).*triang(32))));
 if((mean_bit2>=seuil));
     bit2=1;
@@ -177,7 +177,13 @@ nuage_bits5(cpt) = mean_bit5;
 nuage_bits6(cpt) = mean_bit6;
 
 
-a= [bit6 bit5 bit4 bit3 bit2 bit1];
+a= [ bit6 bit5  bit4 bit3 bit1 bit2 ];
+% if( bi2de(a)==31)
+%     a = de2bi(47);
+% end
+% if( bi2de(a)==27)
+%     a = de2bi(43);
+% end
 image_bits(cpt) = bi2de(a);        
 end
 % determiner les seuils 
