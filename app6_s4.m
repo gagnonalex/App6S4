@@ -14,13 +14,12 @@ plot(abs(fft(s1,fe1)));
 rif_filter = rif_lowpass();
 s1 = [s1; zeros(42,1)];
 s1_filtered = filter(rif_filter, s1);
+s1_filtered = s1_filtered(43:end);
 s1_down = downsample(s1_filtered, fe1/desired_freq);
 
 figure
 plot(abs(fft(s1_filtered, desired_freq)));
 
-rif_delay = 7;
-s1_down = s1_down(rif_delay+1:end);
 
 % RII Butterworth
 % -------------------------------------------------------------------------
@@ -184,16 +183,22 @@ end
 figure
 subplot(3,2,1)
 plot(nuage_bits1,'o');
+title('bit1');
 subplot(3,2,2)
 plot(nuage_bits2,'o');
+title('bit2');
 subplot(3,2,3)
 plot(nuage_bits3,'o');
+title('bit3');
 subplot(3,2,4)
 plot(nuage_bits4,'o');
+title('bit4');
 subplot(3,2,5)
 plot(nuage_bits5,'o');
+title('bit5');
 subplot(3,2,6)
 plot(nuage_bits6,'o');
+title('bit6');
 % nuage_bits2
 % nuage_bits3
 % nuage_bits4
