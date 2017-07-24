@@ -7,15 +7,16 @@ clc
 
 desired_freq = 8000;
 
+figure('name','')
 plot(abs(fft(s1,fe)));
 
-rif_filter = rif_lowpass();
+rif_filt = rif_lowpass();
 
 
 %% Banc de filtre 
 fe = 8000;
 % determiner les 6 raies spectrales très franches
-spectre = abs(fft(s1_down, fe_down));
+spectre = abs(fft(rif_filt, 8000));
 plot(spectre);
 
 spectre_positif = spectre(1:(length(spectre)/2));
@@ -74,9 +75,10 @@ title(['butter laissant passer ', num2str(raies_spectrales(5,2)*fe/2),' Hz']);
 [b6 a6] = butter(2,[raies_spectrales(6,2)-delta,raies_spectrales(6,2)+delta],'bandpass');
 fvtool(b6,a6); 
 title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
-
-
-s1 = filter(b1,a1,result);
-plot(abs(fft(s1, fe_down)));
 hold off
+
+s1 = filter(b1,a1,result(1:32));
+plot(abs(fft(s1, fe_down)));
+title('');
+
 
