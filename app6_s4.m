@@ -9,7 +9,7 @@ clc
 
 desired_freq = 8000;
 
-% plot(abs(fft(s1,fe1)));
+plot(abs(fft(s1,fe1)));
 
 rif_filter = rif_lowpass();
 
