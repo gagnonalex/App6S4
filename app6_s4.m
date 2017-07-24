@@ -24,7 +24,9 @@ plot(abs(fft(s1_filtered, desired_freq)));
 %% Banc de filtre 
 fe = 8000;
 % determiner les 6 raies spectrales très franches
-spectre = abs(fft(s1_down, fe_down));
+
+spectre = abs(fft(s1_down, desired_freq));
+
 plot(spectre);
 
 spectre_positif = spectre(1:(length(spectre)/2));
@@ -41,6 +43,7 @@ raies_spectrales = [ zeros(1,6) ; zeros(1,6) ]';
 for k = 1 : min([6, length(sortedValues)])
     fprintf(1, 'Peak #%d = %d, at location %d\n', ...
     k, sortedValues(k), originalLocations(k));
+
     %matrix(row, column)
     raies_spectrales(k,1) =sortedValues(k) ; % premiere colonne = amplitude
     raies_spectrales(k,2) =originalLocations(k) ; % deuxieme colonne = freqs normalise sur 1(pi)
@@ -85,6 +88,10 @@ fvtool(b6,a6);
 title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
 
 
-s1 = filter(b1,a1,result);
-plot(abs(fft(s1, fe_down)));
+%test filtre
+s1 = filter(b1,a1,s1_down);
+plot(abs(fft(s1)));
 hold off
+
+%% bit checking ( 192 dwonsampled a 32 avec delai de groupe de 8 )
+
