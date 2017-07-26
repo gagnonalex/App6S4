@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage[english, french]{babel}
+\graphicspath{{images/} 
+\geometry{legalpaper, lmargin=0.7in, bmargin=1in}}
+\selectlanguage{french}
+
+\setlength\parindent{0pt}% globally suppress indentation
+
+\begin{document}
+
+\section{Design filtre Butterworth}
+Équation de filtre passe-bas Butterworth d'ordre 1:
+\begin{equation}
+	H(s) = \frac{1}{s+1}
+\end{equation}
+
+Pour passer d'un filtre passe-bas a passe-bande (Transformation frequentielle):
+\begin{equation}
+	H(s) = \frac{1}{\frac{s^2+w_aw_b}{(w_b-w_a)*s}+1}
+\end{equation}
+
+Gauchissement des frequences a la frequence 500Hz:
+\newline
+Frequence a la borne inferieure: 393
+\newline
+Frequence a la borne superieure: 607
+\begin{equation}
+	fe = 8000
+\end{equation}
+\begin{equation}
+	T_e = 1/fe
+\end{equation}
+\begin{equation}
+	\theta_a = 2\pi(393/fe)
+\end{equation}
+\begin{equation}
+	\theta_b = 2\pi(607/fe)
+\end{equation}
+\begin{equation}
+	w_a = \frac{2}{T_e}tan(\theta_a/2)
+\end{equation}
+\begin{equation}
+	w_b = \frac{2}{T_e}tan(\theta_b/2)
+\end{equation}
+
+Transformation bilineaire:
+\begin{equation}
+	H(z) = \frac{1}{\frac{\frac{4}{T_e^2}(\frac{z-1}{z+1})^2+w_aw_b}{(w_b-w_a)\frac{2}{Te}(\frac{z-1}{z+1})}+1}
+\end{equation}
+
+\begin{equation}
+	H(z) = \frac{(w_b-w_a)\frac{2}{T_e}\frac{z-1}{z+1}}{\frac{4}{T_e^2}\frac{z^2-2z+1}{(z+1)(z+1)}+w_aw_b+(w_b-w_a)\frac{2}{T_e}\frac{z-1}{z+1}}
+\end{equation}
+Apres multiples simplications...
+\begin{equation}
+	H(z) = \frac{z^2(\frac{2(w_b-w_a)}{T_e})-\frac{2(w_b-w_a)}{T_e}}{z^2(\frac{4}{T_e^2}+w_bw_a+\frac{2(w_b-w_a)}{T_e})+z(\frac{-8}{T_e^2}+2w_aw_b)+\frac{4}{T_e^2}+w_bw_a-\frac{2(w_b-w_a)}{T_e}}
+\end{equation}
+On peut maintenant extraire ces polynomes dans Matlab pour faire un freqz() et comparer le resultat au freqs() du H(s) Butterworth original.
+
+\end{document}
