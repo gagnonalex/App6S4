@@ -2,334 +2,147 @@ clear all
 close all
 clc
 
-% RIF multicadence
-% -------------------------------------------------------------------------
-[s1, fe1] = audioread('signal_A.wav');
-[s2, fe2] = audioread('signal_B.wav');
+%% RIF MULTICADENCE
+% [s1, fe1] = audioread('signal_A.wav');
+[s1, fe1] = audioread('signal_B.wav');
 
 desired_freq = 8000;
  
 plot(abs(fft(s1,fe1)));
 
-[rif_filter coeffs] = rif_lowpass();
-s1_filt_v2 = filter(coeffs(1:6:end), 1, s1(1:6:end));
-s1_filt_v3 = filter(coeffs(2:6:end), 1, s1(2:6:end));
-s1_filt_v4 = filter(coeffs(3:6:end), 1, s1(3:6:end));
-s1_filt_v5 = filter(coeffs(4:6:end), 1, s1(4:6:end));
-s1_filt_v6 = filter(coeffs(5:6:end), 1, s1(5:6:end));
-s1_filt_v7 = filter(coeffs(6:6:end), 1, s1(6:6:end));
-s1_filt_mod = s1_filt_v2 + s1_filt_v3 + s1_filt_v4 + s1_filt_v5 + s1_filt_v6 + s1_filt_v7;
+[rif_filter, coeffs] = rif_lowpass();
 s1 = [s1; zeros(42,1)];
-s1_filtered = filter(rif_filter, s1);
-s1_filtered = s1_filtered(43:end);
+s1_filtered = filter(coeffs(1:6:end), 1, s1(1:6:end)) + filter(coeffs(2:6:end), 1, s1(2:6:end)) + filter(coeffs(3:6:end), 1, s1(3:6:end)) + filter(coeffs(4:6:end), 1, s1(4:6:end)) + filter(coeffs(5:6:end), 1, s1(5:6:end)) + filter(coeffs(6:6:end), 1, s1(6:6:end));
+s1_filtered = s1_filtered(8:end);
+s1_down = s1_filtered;
+%s1_filtered = filter(rif_filter, s1);
+%s1_filtered = s1_filtered(43:end);
 %s1_down = downsample(s1_filtered, fe1/desired_freq);
-s1_down = s1_filt_mod;
 
 figure
 plot(abs(fft(s1_filtered, desired_freq)));
 
+%% RII Butterworth
+peak_freqs = [500, 1000, 1500, 2000, 2500, 3000];
+delta = 107;
+butter_coeffs = zeros(12, 3);
+butter_index = 1:2:12;
 
-% RII Butterworth
-% -------------------------------------------------------------------------
-%% Banc de filtre 
-fe = 8000;
-% determiner les 6 raies spectrales très franches
-
-spectre = abs(fft(s1_down, desired_freq));
-
-plot(0:8000-1,spectre);
-
-spectre_positif = spectre(1:(length(spectre)/2));
-
-
-[peaks freq] = findpeaks(spectre_positif,'MinPeakHeight',200);
-
-% Sort them in descending order to find the largest ones.
-[sortedValues sortedIndexes] = sort((peaks), 'descend');
-originalLocations = freq(sortedIndexes);
-
-raies_spectrales = [ zeros(1,6) ; zeros(1,6) ]';
-
-
-for k = 1 : 6
-    fprintf(1, 'Peak #%d = %d, at location %d\n', ...
-    k, peaks(k), freq(k)- 1 ); % on soustrait un car on doit partir a 0 
-
-    %matrix(row, column)
-    raies_spectrales(k,1) =peaks(k) ; % premiere colonne = amplitude
-    raies_spectrales(k,2) = freq(k)- 1 ; % deuxieme colonne = freqs normalise sur 1(pi)
+for index = butter_index
+    freq_index = index/2 + 0.5;
+    low_limit = peak_freqs(freq_index) - delta;
+    low_limit = low_limit / desired_freq*2;
     
+    high_limit = peak_freqs(freq_index) + delta;
+    high_limit = high_limit / desired_freq*2;
+    
+    [b, a] = butter(1, [low_limit, high_limit], 'bandpass');
+    butter_coeffs(index, :) = b;
+    butter_coeffs(index+1, :) = a;
 end
 
-text(raies_spectrales(:,2)+.02,raies_spectrales(:,1),num2str((1:numel(raies_spectrales(:,1)))'))
+rii_group_delay = 12;
+s1_down = [s1_down; zeros(rii_group_delay,1)];
+for qmn = 1:2
+    filter_index = 1:2:12;
+    filtered_bits = zeros(6, 524288);
 
-%normalise les frequences
- raies_spectrales(:,2) = raies_spectrales(:,2)./fe*2
-%% design des filtre passe-bande
-delta = 107/fe*2;
+    for index = filter_index
+        if qmn == 2
+            m=0 ;% avant la virgule
+            n= 8;% apres la viirgule 9 = presquee pareille, 10 = parfaitement
+            temp = filter_Qmn(s1_down, butter_coeffs(index, :), butter_coeffs(index+1, :), 2, m, n);
+        else
+            temp = filter(butter_coeffs(index, :), butter_coeffs(index+1, :),s1_down);
+        end
+        temp = temp(rii_group_delay+1:end);
+        filtered_bits((index/2 + 0.5), :) = temp;
+    end
 
-hold on  % utiliser hold on et freqz pour superposer les filtres
-[b1 a1] = butter(1,[raies_spectrales(1,2)-delta,raies_spectrales(1,2)+delta],'bandpass');
-% fvtool(b1,a1);   
-title(['butter laissant passer ', num2str(raies_spectrales(1,2)*fe/2),' Hz']);
-figure
-freqz(b1,a1);
+    sample_size = 32;
+    sample_index = 1:sample_size:length(filtered_bits(1, :))-sample_size+1;
+    mean_cloud_1 = [0];
+    mean_cloud_2 = [0];
+    mean_cloud_3 = [0];
+    mean_cloud_4 = [0];
+    mean_cloud_5 = [0];
+    mean_cloud_6 = [0];
+    image_bits = [0];
 
-[b2 a2] = butter(1,[raies_spectrales(2,2)-delta,raies_spectrales(2,2)+delta],'bandpass');
-% fvtool(b2,a2); 
-title(['butter laissant passer ', num2str(raies_spectrales(2,2)*fe/2),' Hz']);
+    for index = sample_index
+        bits = zeros(1, 6);
+        mean_value_1 = mean(abs(filtered_bits(1, index:index+sample_size-1).*triang(32)'));
+        mean_value_2 = mean(abs(filtered_bits(2, index:index+sample_size-1).*triang(32)'));
+        mean_value_3 = mean(abs(filtered_bits(3, index:index+sample_size-1).*triang(32)'));
+        mean_value_4 = mean(abs(filtered_bits(4, index:index+sample_size-1).*triang(32)'));
+        mean_value_5 = mean(abs(filtered_bits(5, index:index+sample_size-1).*triang(32)'));
+        mean_value_6 = mean(abs(filtered_bits(6, index:index+sample_size-1).*triang(32)'));
 
+        if mean_value_1 > 0.03
+            bits(1) = 1;
+        end
+        if mean_value_2 > 0.027
+            bits(2) = 1;
+        end
+        if mean_value_3 > 0.025
+            bits(3) = 1;
+        end
+        if mean_value_4 > 0.019
+            bits(4) = 1;
+        end
+        if mean_value_5 > 0.014
+            bits(5) = 1;
+        end
+        if mean_value_6 > 0.01
+            bits(6) = 1;
+        end
 
-[b3 a3]= butter(1,[raies_spectrales(3,2)-delta,raies_spectrales(3,2)+delta],'bandpass');
-% fvtool(b3,a3); 
-title(['butter laissant passer ', num2str(raies_spectrales(3,2)*fe/2),' Hz']);
+        image_bits = [image_bits bi2de(bits)];
 
+        %% Get Mean Clouds
+        mean_cloud_1 = [mean_cloud_1 mean_value_1];
+        mean_cloud_2 = [mean_cloud_2 mean_value_2];
+        mean_cloud_3 = [mean_cloud_3 mean_value_3];
+        mean_cloud_4 = [mean_cloud_4 mean_value_4];
+        mean_cloud_5 = [mean_cloud_5 mean_value_5];
+        mean_cloud_6 = [mean_cloud_6 mean_value_6];
+    end
+    image_bits = image_bits(2:end);
 
-[b4 a4] = butter(1,[raies_spectrales(4,2)-delta,raies_spectrales(4,2)+delta],'bandpass');
-% fvtool(b4,a4); 
-title(['butter laissant passer ', num2str(raies_spectrales(4,2)*fe/2),' Hz']);
+    image = reshape(image_bits,[128,128]);
+    if qmn == 1
+        image_butter = image;
+    end
+    figure
+    imshow(image,[0 63]);
 
+    %% Display Mean Clouds
+    mean_cloud_1 = mean_cloud_1(2:end);
+    mean_cloud_2 = mean_cloud_2(2:end);
+    mean_cloud_3 = mean_cloud_3(2:end);
+    mean_cloud_4 = mean_cloud_4(2:end);
+    mean_cloud_5 = mean_cloud_5(2:end);
+    mean_cloud_6 = mean_cloud_6(2:end);
 
-[b5 a5] = butter(1,[raies_spectrales(5,2)-delta,raies_spectrales(5,2)+delta],'bandpass');
-% fvtool(b5,a5); 
-title(['butter laissant passer ', num2str(raies_spectrales(5,2)*fe/2),' Hz']);
+    figure
+    subplot(3,2,1)
+    plot(mean_cloud_1, 'o')
 
+    subplot(3,2,2)
+    plot(mean_cloud_2, 'o')
 
-[b6 a6] = butter(1,[raies_spectrales(6,2)-delta,raies_spectrales(6,2)+delta],'bandpass');
-% fvtool(b6,a6); 
-title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
+    subplot(3,2,3)
+    plot(mean_cloud_3, 'o')
 
+    subplot(3,2,4)
+    plot(mean_cloud_4, 'o')
 
-%% bit checking ( 192 dwonsampled a 32 avec delai de groupe de 8 )
+    subplot(3,2,5)
+    plot(mean_cloud_5, 'o')
 
-%%trouvwr graphiquement avec FDA = 12
-
-rii_grp_delay = 12;
-s1_down = [s1_down; zeros(rii_grp_delay,1)];
-%% version avec filtre normal
-f1 = filter(b1,a1,s1_down);
-f1 = f1(rii_grp_delay+1:end);
-
-f2 = filter(b2,a2,s1_down);
-f2 = f2(rii_grp_delay+1:end);
-
-f3 = filter(b3,a3,s1_down);
-f3 = f3(rii_grp_delay+1:end);
-
-f4 = filter(b4,a4,s1_down);
-f4 = f4(rii_grp_delay+1:end);
-
-f5 = filter(b5,a5,s1_down);
-f5 = f5(rii_grp_delay+1:end);
-
-f6 = filter(b6,a6,s1_down);
-f6 = f6(rii_grp_delay+1:end);
-%% version avec filtre qmn
-% m=0 ;% avant la virgule
-% n= 10;% apres la viirgule 9 = presquee pareille, 10 = parfaitement
-% f1 = filter_Qmn(s1_down,b1,a1,2,m,n)';
-% f2 = filter_Qmn(s1_down,b2,a2,2,m,n)';
-% f3 = filter_Qmn(s1_down,b3,a3,2,m,n)';
-% f4 = filter_Qmn(s1_down,b4,a4,2,m,n)';
-% f5 = filter_Qmn(s1_down,b5,a5,2,m,n)';
-% f6 = filter_Qmn(s1_down,b6,a6,2,m,n)';
-% 
-% f1 = f1(rii_grp_delay+1:end);
-% f2 = f2(rii_grp_delay+1:end);
-% f3 = f3(rii_grp_delay+1:end);
-% f4 = f4(rii_grp_delay+1:end);
-% f5 = f5(rii_grp_delay+1:end);
-% f6 = f6(rii_grp_delay+1:end);
-%%
-%Init tableau de la loop
-image_bits=[0];
-tab_bit_1 = [0];
-
-cpt=0;
-seuil = 0.03;
-bond = 31;
-nuage_bits1 = [zeros(1, length(f1)/32)];
-nuage_bits2 = [zeros(1, length(f1)/32)];
-nuage_bits3 = [zeros(1, length(f1)/32)];
-nuage_bits4 = [zeros(1, length(f1)/32)];
-nuage_bits5 = [zeros(1, length(f1)/32)];
-nuage_bits6 = [zeros(1, length(f1)/32)];
-
-for index = 1:32:length(f1)-bond
-    cpt=cpt+1;
-   bit1 = 0;
-   bit2 = 0;
-   bit3 = 0;
-   bit4 = 0;
-   bit5 = 0;
-   bit6 = 0;   
-   
-mean_bit1 = mean(abs((f1(index:index+bond).*triang(32))));
-if((mean_bit1>=seuil));
-    bit1=1;
+    subplot(3,2,6)
+    plot(mean_cloud_6, 'o')
 end
-  
-mean_bit2 = mean(abs((f2(index:index+bond).*triang(32))));
-if((mean_bit2>=seuil));
-    bit2=1;
-end
-
-mean_bit3 = mean(abs((f3(index:index+bond).*triang(32))));
-if((mean_bit3>=seuil));
-    bit3=1;
-end
-
-mean_bit4 = mean(abs((f4(index:index+bond).*triang(32))));
-if((mean_bit4>=seuil));
-    bit4=1;
-end
-
-mean_bit5 = mean(abs((f5(index:index+bond).*triang(32))));
-if((mean_bit5>=seuil));
-    bit5=1;
-end
-
-mean_bit6 = mean(abs((f6(index:index+bond).*triang(32))));
-if((mean_bit6>=seuil));
-    bit6=1;
-end
-
-nuage_bits1(cpt) = mean_bit1;
-nuage_bits2(cpt) = mean_bit2;
-nuage_bits3(cpt) = mean_bit3;
-nuage_bits4(cpt) = mean_bit4;
-nuage_bits5(cpt) = mean_bit5;
-nuage_bits6(cpt) = mean_bit6;
-
-a= [bit6 bit5 bit4 bit3 bit2 bit1];
-image_bits(cpt) = bi2de(a);        
-end
-
-
-image_filtre = reshape(image_bits,[128,128]);
-figure
-imshow(image_filtre,[0 63]);
-
-% determiner les seuils 
-figure
-subplot(3,2,1)
-plot(nuage_bits1,'o');
-title('bit1');
-subplot(3,2,2)
-plot(nuage_bits2,'o');
-title('bit2');
-subplot(3,2,3)
-plot(nuage_bits3,'o');
-title('bit3');
-subplot(3,2,4)
-plot(nuage_bits4,'o');
-title('bit4');
-subplot(3,2,5)
-plot(nuage_bits5,'o');
-title('bit5');
-subplot(3,2,6)
-plot(nuage_bits6,'o');
-title('bit6');
-
-
-image_filtre = reshape(image_bits,[128,128]);
-figure
-imshow(image_filtre,[0 63]);
-
-%% Qmn
-% x    => Signal d'entrée à filtrer
-% y    => Signal de sortie filtré
-% b    => Polynôme du numérateur du filtre
-% a    => Polynôme du dénominateur du filtre
-% base => Base de représentation
-% m    => Nombre de chiffre entier (avant la virgule)
-% filter_Qmn(x,b,a,base,m,n)% n    => Nombre de chiffre fractionnaire (après la virgule)
-%% version avec filtre qmn
-m=0 ;% avant la virgule
-n= 9;% apres la viirgule 9 = presquee pareille, 10 = parfaitement
-f1 = filter_Qmn(s1_down,b1,a1,2,m,n)';
-f2 = filter_Qmn(s1_down,b2,a2,2,m,n)';
-f3 = filter_Qmn(s1_down,b3,a3,2,m,n)';
-f4 = filter_Qmn(s1_down,b4,a4,2,m,n)';
-f5 = filter_Qmn(s1_down,b5,a5,2,m,n)';
-f6 = filter_Qmn(s1_down,b6,a6,2,m,n)';
-
-f1 = f1(rii_grp_delay+1:end);
-f2 = f2(rii_grp_delay+1:end);
-f3 = f3(rii_grp_delay+1:end);
-f4 = f4(rii_grp_delay+1:end);
-f5 = f5(rii_grp_delay+1:end);
-f6 = f6(rii_grp_delay+1:end);
-
-%Init tableau de la loop
-image_bits=[0];
-tab_bit_1 = [0];
-
-cpt=0;
-seuil = 0.03;
-bond = 31;
-nuage_bits1 = [zeros(1, length(f1)/32)];
-nuage_bits2 = [zeros(1, length(f1)/32)];
-nuage_bits3 = [zeros(1, length(f1)/32)];
-nuage_bits4 = [zeros(1, length(f1)/32)];
-nuage_bits5 = [zeros(1, length(f1)/32)];
-nuage_bits6 = [zeros(1, length(f1)/32)];
-
-for index = 1:32:length(f1)-bond
-    cpt=cpt+1;
-   bit1 = 0;
-   bit2 = 0;
-   bit3 = 0;
-   bit4 = 0;
-   bit5 = 0;
-   bit6 = 0;   
-   
-mean_bit1 = mean(abs((f1(index:index+bond).*triang(32))));
-if((mean_bit1>=seuil));
-    bit1=1;
-end
-  
-mean_bit2 = mean(abs((f2(index:index+bond).*triang(32))));
-if((mean_bit2>=seuil));
-    bit2=1;
-end
-
-mean_bit3 = mean(abs((f3(index:index+bond).*triang(32))));
-if((mean_bit3>=seuil));
-    bit3=1;
-end
-
-mean_bit4 = mean(abs((f4(index:index+bond).*triang(32))));
-if((mean_bit4>=seuil));
-    bit4=1;
-end
-
-mean_bit5 = mean(abs((f5(index:index+bond).*triang(32))));
-if((mean_bit5>=seuil));
-    bit5=1;
-end
-
-mean_bit6 = mean(abs((f6(index:index+bond).*triang(32))));
-if((mean_bit6>=seuil));
-    bit6=1;
-end
-
-nuage_bits1(cpt) = mean_bit1;
-nuage_bits2(cpt) = mean_bit2;
-nuage_bits3(cpt) = mean_bit3;
-nuage_bits4(cpt) = mean_bit4;
-nuage_bits5(cpt) = mean_bit5;
-nuage_bits6(cpt) = mean_bit6;
-
-a= [bit1 bit2 bit3 bit4 bit5 bit6 ];
-image_bits(cpt) = bi2de(a);        
-end
-
-
-image_filtre_Qmn = reshape(image_bits,[128,128]);
-% figure
-% imshow(image_filtre_Qmn,[0 63]);
-%voir partie avec qmn ou filter
 %%
 % PSNR =  20*log[ MAX/sqrt(MSE) ]
 % MSEE = 1/m*n * somme(0 a m-1) * somme(0 a n-1)[I(i,j) - K(i,j)]^2  
@@ -343,10 +156,14 @@ resultat_somme = 0;
 MAX = 2^6;
 for i= 1:m
    for j=1:n
-       resultat_somme = resultat_somme+ (image_filtre(i,j) -image_filtre_Qmn(i,j))^2;
+       resultat_somme = resultat_somme + (image_butter(i,j) - image(i,j))^2;
    end   
 end
 
 MSE = 1/(m*n)* resultat_somme;
 PSNR = 20*log(MAX/sqrt(MSE));
 
+imwrite(image_butter, 'image1.png');
+    
+    
+    
