@@ -1,4 +1,4 @@
-function Hd = rif_lowpass
+function [Hd b] = rif_lowpass
 %RIF_LOWPASS Returns a discrete-time filter object.
 
 % MATLAB Code

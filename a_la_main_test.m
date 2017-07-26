@@ -11,13 +11,17 @@ thetaa = 2*pi*(freq1/8000);
 wa = 2/Te*tan(thetaa/2);
 wb = 2/Te*tan(thetab/2);
 
-syms z;
-b = 2*(wb-wa)*z^2/Te - 2*(wb-wa)/Te;
-disp(sym2poly(b));
+b1 = 2*(wb-wa)/Te;
+b2 = -2*(wb-wa)/Te;
+b = [b1 0 b2];
 
-a = (4/Te^2) * (z^2-2*z+1) + wa*wb*(z^2+2*z+1) + (wb-wa)*(2/Te)*(z^2-1);
+a1 = 4/(Te^2) + wb*wa + 2*(wb-wa)/Te;
+a2 = -8/(Te^2) + 2*wb*wa;
+a3 = 4/(Te^2) + wb*wa - 2*(wb-wa)/Te;
+a = [a1 a2 a3];
 
-freqz(sym2poly(b), sym2poly(a));
+freqz(b, a);
+
 
 
 

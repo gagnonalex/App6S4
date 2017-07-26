@@ -11,11 +11,19 @@ desired_freq = 8000;
  
 plot(abs(fft(s1,fe1)));
 
-rif_filter = rif_lowpass();
+[rif_filter coeffs] = rif_lowpass();
+s1_filt_v2 = filter(coeffs(1:6:end), 1, s1(1:6:end));
+s1_filt_v3 = filter(coeffs(2:6:end), 1, s1(2:6:end));
+s1_filt_v4 = filter(coeffs(3:6:end), 1, s1(3:6:end));
+s1_filt_v5 = filter(coeffs(4:6:end), 1, s1(4:6:end));
+s1_filt_v6 = filter(coeffs(5:6:end), 1, s1(5:6:end));
+s1_filt_v7 = filter(coeffs(6:6:end), 1, s1(6:6:end));
+s1_filt_mod = s1_filt_v2 + s1_filt_v3 + s1_filt_v4 + s1_filt_v5 + s1_filt_v6 + s1_filt_v7;
 s1 = [s1; zeros(42,1)];
 s1_filtered = filter(rif_filter, s1);
 s1_filtered = s1_filtered(43:end);
-s1_down = downsample(s1_filtered, fe1/desired_freq);
+%s1_down = downsample(s1_filtered, fe1/desired_freq);
+s1_down = s1_filt_mod;
 
 figure
 plot(abs(fft(s1_filtered, desired_freq)));
@@ -82,7 +90,7 @@ title(['butter laissant passer ', num2str(raies_spectrales(3,2)*fe/2),' Hz']);
 title(['butter laissant passer ', num2str(raies_spectrales(4,2)*fe/2),' Hz']);
 
 
-[b5 a5] = butter(2,[raies_spectrales(5,2)-delta,raies_spectrales(5,2)+delta],'bandpass');
+[b5 a5] = butter(1,[raies_spectrales(5,2)-delta,raies_spectrales(5,2)+delta],'bandpass');
 % fvtool(b5,a5); 
 title(['butter laissant passer ', num2str(raies_spectrales(5,2)*fe/2),' Hz']);
 
@@ -99,39 +107,39 @@ title(['butter laissant passer ', num2str(raies_spectrales(6,2)*fe/2),' Hz']);
 rii_grp_delay = 12;
 s1_down = [s1_down; zeros(rii_grp_delay,1)];
 %% version avec filtre normal
-% f1 = filter(b1,a1,s1_down);
-% f1 = f1(rii_grp_delay+1:end);
-% 
-% f2 = filter(b2,a2,s1_down);
-% f2 = f2(rii_grp_delay+1:end);
-% 
-% f3 = filter(b3,a3,s1_down);
-% f3 = f3(rii_grp_delay+1:end);
-% 
-% f4 = filter(b4,a4,s1_down);
-% f4 = f4(rii_grp_delay+1:end);
-% 
-% f5 = filter(b5,a5,s1_down);
-% f5 = f5(rii_grp_delay+1:end);
-% 
-% f6 = filter(b6,a6,s1_down);
-% f6 = f6(rii_grp_delay+1:end);
-%% version avec filtre qmn
-m=0 ;% avant la virgule
-n= 10;% apres la viirgule 9 = presquee pareille, 10 = parfaitement
-f1 = filter_Qmn(s1_down,b1,a1,2,m,n)';
-f2 = filter_Qmn(s1_down,b2,a2,2,m,n)';
-f3 = filter_Qmn(s1_down,b3,a3,2,m,n)';
-f4 = filter_Qmn(s1_down,b4,a4,2,m,n)';
-f5 = filter_Qmn(s1_down,b5,a5,2,m,n)';
-f6 = filter_Qmn(s1_down,b6,a6,2,m,n)';
-
+f1 = filter(b1,a1,s1_down);
 f1 = f1(rii_grp_delay+1:end);
+
+f2 = filter(b2,a2,s1_down);
 f2 = f2(rii_grp_delay+1:end);
+
+f3 = filter(b3,a3,s1_down);
 f3 = f3(rii_grp_delay+1:end);
+
+f4 = filter(b4,a4,s1_down);
 f4 = f4(rii_grp_delay+1:end);
+
+f5 = filter(b5,a5,s1_down);
 f5 = f5(rii_grp_delay+1:end);
+
+f6 = filter(b6,a6,s1_down);
 f6 = f6(rii_grp_delay+1:end);
+%% version avec filtre qmn
+% m=0 ;% avant la virgule
+% n= 10;% apres la viirgule 9 = presquee pareille, 10 = parfaitement
+% f1 = filter_Qmn(s1_down,b1,a1,2,m,n)';
+% f2 = filter_Qmn(s1_down,b2,a2,2,m,n)';
+% f3 = filter_Qmn(s1_down,b3,a3,2,m,n)';
+% f4 = filter_Qmn(s1_down,b4,a4,2,m,n)';
+% f5 = filter_Qmn(s1_down,b5,a5,2,m,n)';
+% f6 = filter_Qmn(s1_down,b6,a6,2,m,n)';
+% 
+% f1 = f1(rii_grp_delay+1:end);
+% f2 = f2(rii_grp_delay+1:end);
+% f3 = f3(rii_grp_delay+1:end);
+% f4 = f4(rii_grp_delay+1:end);
+% f5 = f5(rii_grp_delay+1:end);
+% f6 = f6(rii_grp_delay+1:end);
 %%
 %Init tableau de la loop
 image_bits=[0];
@@ -193,7 +201,7 @@ nuage_bits4(cpt) = mean_bit4;
 nuage_bits5(cpt) = mean_bit5;
 nuage_bits6(cpt) = mean_bit6;
 
-a= [bit1 bit2 bit3 bit4 bit5 bit6 ];
+a= [bit6 bit5 bit4 bit3 bit2 bit1];
 image_bits(cpt) = bi2de(a);        
 end
 
